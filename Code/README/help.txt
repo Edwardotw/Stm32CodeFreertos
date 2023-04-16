@@ -1,0 +1,85 @@
+1.任务创建和删除API函数
+xTaskCreate()   
+xTaskDelete()              
+（1）使用动态方法创建一个任务
+BaseType_t xTaskCreate(	TaskFunction_t pxTaskCode,              
+						const char * const pcName,              
+						const uint16_t usStackDepth,            
+						void * const pvParameters,              
+						UBaseType_t uxPriority,                 
+						TaskHandle_t * const pxCreatedTask )    
+参数：						                                          
+pxTaskCode：任务函数
+pcName：任务名字，一般用于追踪和调试，任务名字长度不能超过configMAX_TASK_NAME_LEN
+usStackDepth：任务堆栈大小，注意，实际申请到的堆栈是usStackDepth的4倍。其中空闲任务的堆栈大小是configMINIMAL_STACK_SIZE
+pvParameters：传递给任务函数的参数
+uxPriority：任务优先级，范围：0~configMAX_PRIORITIES-1
+pxCreatedTask：任务句柄。任务创建成功以后会返回此任务的任务句柄，这个句柄其实就是任务的任务堆栈。此参数就用来保存这个任务句柄，其他API函数可能会使用到这个句柄
+
+返回值：
+pdPASS：任务创建成功。
+errorCOULD_NOT_ALLOCATE_REQUIRED_MEMORY：任务创建失败，因为内存不足
+
+（2）删除一个任务
+void vTaskDelete(TaskHandle_t xTaskToDelete)                         
+
+参数：
+xTaskToDelete：要删除的任务的任务句柄
+
+返回值：
+无
+
+备注：
+任务被删除后，此任务之前申请的堆栈和控制块内存会在空闲任务中被释放掉。因此，调用函数vTaskDelete()删除任务后必须给空闲任务一定的运行时间。
+
+2.任务挂起和恢复API函数
+（1）将某个任务设置为挂起态，进入挂起态的任务永远都不会进入运行态。退出挂起态的唯一方法就是调用任务恢复函数vTaskResume()或xTaskResumeFromISR
+void vTaskSuspend(TaskHandle_t xTaskToSuspend)                 
+参数：
+xTaskToSuspend：要挂起的任务的任务句柄
+返回值：
+无
+
+（2）将一个任务从挂起态恢复到就绪态，只有通过函数vTaskSuspend()设置为挂起态的任务才可使用vTaskResume()恢复。
+void vTaskResume(TaskHandle_t xTaskToResume)                   
+
+参数：
+xTaskToResume：要恢复的任务的任务句柄
+
+返回值：
+无
+
+3.临界段代码
+taskENTER_CRITICAL()            //
+taskEXIT_CRITICAL()
+taskENTER_CRITICAL_FROM_ISR()
+taskEXIT_CRITICAL_FROM_ISR()
+
+4.队列相关函数
+（1）队列创建
+QueueHandle_t xQueueCreate(UBaseType_t uxQueueLength,UBaseType_t uxItemSize)
+参数：
+uxQueueLength：要创建的队列的队列长度，这里是队列的项目数
+uxItemSize：队列中每个项目（消息）的长度，单位为字节
+返回值：
+其他值：队列创建成功后返回的队列句柄
+NULL：队列创建失败
+（2）发送消息到队列尾部（后向入队），以下两个函数是一样的
+xQueueSend()
+xQueueSendToBack()
+
+（3）发送消息到队列头（前向入队）
+xQueueSendToFront()
+
+（4）发送消息到队列，带覆写功能；队列满了之后自动覆盖掉旧的消息
+xQueueOverWrite()
+
+（5）从中断发送消息到队列尾部（后向入队），以下两个函数是一样的
+xQueueSendFromISR()
+xQueueSendToBackFromISR()
+
+（6）从中断发送消息到队列头（前向入队）
+xQueueSendToFrontFromISR()
+
+（7）从中断发送消息到队列，带覆写功能；队列满了之后自动覆盖掉旧的消息
+xQueueOverWriteFromISR()
