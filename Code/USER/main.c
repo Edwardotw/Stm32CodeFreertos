@@ -1,55 +1,56 @@
+//Github test at 2023/04/17 edit at web
 //Github test at 2023/04/16
-//FreeRTOSÍ·ÎÄ¼ş
+//FreeRTOSå¤´æ–‡ä»¶
 #include "FreeRTOS.h"	
 #include "task.h"
 #include "queue.h"
 #include "semphr.h"
 #include "timers.h"
-//ÏµÍ³Í·ÎÄ¼ş
+//ç³»ç»Ÿå¤´æ–‡ä»¶
 #include "sys.h"
 #include "delay.h"
-//Ğ¾Æ¬ÅäÖÃÍ·ÎÄ¼ş
+//èŠ¯ç‰‡é…ç½®å¤´æ–‡ä»¶
 #include "bsp_usart.h"
 #include "bsp_timer.h"
 #include "bsp_wdg.h"
-//Çı¶¯²ãÍ·ÎÄ¼ş
+//é©±åŠ¨å±‚å¤´æ–‡ä»¶
 #include "drv_led.h"
 #include "drv_key.h"
 #include "drv_beep.h"
 #include "drv_dht11.h"
-//Ó¦ÓÃ²ãÍ·ÎÄ¼ş
+//åº”ç”¨å±‚å¤´æ–‡ä»¶
 
-//±ê×¼Í·ÎÄ¼ş
+//æ ‡å‡†å¤´æ–‡ä»¶
 #include "string.h"
 
-//ÈÎÎñ²ÎÊıÅäÖÃ
-#define START_TASK_PRIO  1             //ÈÎÎñÓÅÏÈ¼¶
-#define START_TASK_STKSIZE  50           //ÈÎÎñ¶ÑÕ»´óĞ¡£¬ÒÔ×ÖÎªµ¥Î»£¬4¸ö×Ö½Ú
-TaskHandle_t START_TASK_HANDLER;        //ÈÎÎñ¾ä±ú
-void start_task(void* pvParameters);   //ÈÎÎñº¯Êı
+//ä»»åŠ¡å‚æ•°é…ç½®
+#define START_TASK_PRIO  1             //ä»»åŠ¡ä¼˜å…ˆçº§
+#define START_TASK_STKSIZE  50           //ä»»åŠ¡å †æ ˆå¤§å°ï¼Œä»¥å­—ä¸ºå•ä½ï¼Œ4ä¸ªå­—èŠ‚
+TaskHandle_t START_TASK_HANDLER;        //ä»»åŠ¡å¥æŸ„
+void start_task(void* pvParameters);   //ä»»åŠ¡å‡½æ•°
 
-#define IWDG_TASK_PRIO  2              //ÈÎÎñÓÅÏÈ¼¶
-#define IWDG_TASK_STKSIZE  50             //ÈÎÎñ¶ÑÕ»´óĞ¡£¬ÒÔ×ÖÎªµ¥Î»£¬4¸ö×Ö½Ú
-TaskHandle_t IWDG_TASK_HANDLER;         //ÈÎÎñ¾ä±ú
-void iwdg_task(void* pvParameters);    //ÈÎÎñº¯Êı
+#define IWDG_TASK_PRIO  2              //ä»»åŠ¡ä¼˜å…ˆçº§
+#define IWDG_TASK_STKSIZE  50             //ä»»åŠ¡å †æ ˆå¤§å°ï¼Œä»¥å­—ä¸ºå•ä½ï¼Œ4ä¸ªå­—èŠ‚
+TaskHandle_t IWDG_TASK_HANDLER;         //ä»»åŠ¡å¥æŸ„
+void iwdg_task(void* pvParameters);    //ä»»åŠ¡å‡½æ•°
 
-#define LED_TASK_PRIO  3              //ÈÎÎñÓÅÏÈ¼¶
-#define LED_TASK_STKSIZE  256             //ÈÎÎñ¶ÑÕ»´óĞ¡£¬ÒÔ×ÖÎªµ¥Î»£¬4¸ö×Ö½Ú
-TaskHandle_t LED_TASK_HANDLER;         //ÈÎÎñ¾ä±ú
-void led_task(void* pvParameters);    //ÈÎÎñº¯Êı
+#define LED_TASK_PRIO  3              //ä»»åŠ¡ä¼˜å…ˆçº§
+#define LED_TASK_STKSIZE  256             //ä»»åŠ¡å †æ ˆå¤§å°ï¼Œä»¥å­—ä¸ºå•ä½ï¼Œ4ä¸ªå­—èŠ‚
+TaskHandle_t LED_TASK_HANDLER;         //ä»»åŠ¡å¥æŸ„
+void led_task(void* pvParameters);    //ä»»åŠ¡å‡½æ•°
 
-#define KEY_TASK_PRIO  4              //ÈÎÎñÓÅÏÈ¼¶
-#define KEY_TASK_STKSIZE  256             //ÈÎÎñ¶ÑÕ»´óĞ¡£¬ÒÔ×ÖÎªµ¥Î»£¬4¸ö×Ö½Ú
-TaskHandle_t KEY_TASK_HANDLER;         //ÈÎÎñ¾ä±ú
-void key_task(void* pvParameters);    //ÈÎÎñº¯Êı
+#define KEY_TASK_PRIO  4              //ä»»åŠ¡ä¼˜å…ˆçº§
+#define KEY_TASK_STKSIZE  256             //ä»»åŠ¡å †æ ˆå¤§å°ï¼Œä»¥å­—ä¸ºå•ä½ï¼Œ4ä¸ªå­—èŠ‚
+TaskHandle_t KEY_TASK_HANDLER;         //ä»»åŠ¡å¥æŸ„
+void key_task(void* pvParameters);    //ä»»åŠ¡å‡½æ•°
 
-#define TEST_TASK_PRIO  5              //ÈÎÎñÓÅÏÈ¼¶
-#define TEST_TASK_STKSIZE  256             //ÈÎÎñ¶ÑÕ»´óĞ¡£¬ÒÔ×ÖÎªµ¥Î»£¬4¸ö×Ö½Ú
-TaskHandle_t TEST_TASK_HANDLER;         //ÈÎÎñ¾ä±ú
-void test_task(void* pvParameters);    //ÈÎÎñº¯Êı
+#define TEST_TASK_PRIO  5              //ä»»åŠ¡ä¼˜å…ˆçº§
+#define TEST_TASK_STKSIZE  256             //ä»»åŠ¡å †æ ˆå¤§å°ï¼Œä»¥å­—ä¸ºå•ä½ï¼Œ4ä¸ªå­—èŠ‚
+TaskHandle_t TEST_TASK_HANDLER;         //ä»»åŠ¡å¥æŸ„
+void test_task(void* pvParameters);    //ä»»åŠ¡å‡½æ•°
 
-//ËùÓĞÓÃµ½µÄÏûÏ¢¶ÓÁĞÔÚ´Ë´´½¨
-QueueHandle_t UART1_QUEUE;       //ĞÅÏ¢¶ÓÁĞ¾ä±ú
+//æ‰€æœ‰ç”¨åˆ°çš„æ¶ˆæ¯é˜Ÿåˆ—åœ¨æ­¤åˆ›å»º
+QueueHandle_t UART1_QUEUE;       //ä¿¡æ¯é˜Ÿåˆ—å¥æŸ„
 
 typedef struct
 {
@@ -58,16 +59,16 @@ typedef struct
 	uint8_t serial[5];
 }SN;
 
-//Ó²¼ş³õÊ¼»¯
+//ç¡¬ä»¶åˆå§‹åŒ–
 void HardWare_Init()
 {
 	DHT11_STATUS dht11_status;
 	NVIC_PriorityGroupConfig(NVIC_PriorityGroup_4);
-	delay_init();	    //ÑÓÊ±º¯Êı³õÊ¼»¯	 
+	delay_init();	    //å»¶æ—¶å‡½æ•°åˆå§‹åŒ–	 
 	uart1_init(9600);
 	uart3_init(9600);
 //	TIM3_Int_Init(7199,9999);
-	LED_Init();		  	//³õÊ¼»¯ÓëLEDÁ¬½ÓµÄÓ²¼ş½Ó¿Ú
+	LED_Init();		  	//åˆå§‹åŒ–ä¸LEDè¿æ¥çš„ç¡¬ä»¶æ¥å£
 	BEEP_Init();
 	KEY_Init();
 	delay_ms(1000);
@@ -80,7 +81,7 @@ void HardWare_Init()
 
 int main(void)
 {	
-	HardWare_Init();   //ÓĞĞ©Ó²¼ş³õÊ¼»¯ºó»áÓÃµ½¶ÓÁĞ£¨Èç´®¿ÚÖĞ¶Ï£©£¬ËùÒÔÔÚ¶ÓÁĞ´´½¨Íê³ÉºóÓ²¼ş³õÊ¼»¯
+	HardWare_Init();   //æœ‰äº›ç¡¬ä»¶åˆå§‹åŒ–åä¼šç”¨åˆ°é˜Ÿåˆ—ï¼ˆå¦‚ä¸²å£ä¸­æ–­ï¼‰ï¼Œæ‰€ä»¥åœ¨é˜Ÿåˆ—åˆ›å»ºå®Œæˆåç¡¬ä»¶åˆå§‹åŒ–
 	
 	if(RCC_GetFlagStatus(RCC_FLAG_IWDGRST) == SET)
 	{
@@ -104,18 +105,18 @@ int main(void)
 
 void start_task(void* pvParameters)
 {
-	taskENTER_CRITICAL();  //½øÈëÁÙ½çÇø
+	taskENTER_CRITICAL();  //è¿›å…¥ä¸´ç•ŒåŒº
 	
-	UART1_QUEUE = xQueueCreate(1,sizeof(SN)); //´´½¨ÏûÏ¢Message_Queue,¶ÓÁĞÏî³¤¶ÈÊÇ´®¿Ú½ÓÊÕ»º³åÇø³¤¶È
+	UART1_QUEUE = xQueueCreate(1,sizeof(SN)); //åˆ›å»ºæ¶ˆæ¯Message_Queue,é˜Ÿåˆ—é¡¹é•¿åº¦æ˜¯ä¸²å£æ¥æ”¶ç¼“å†²åŒºé•¿åº¦
 	
-    //´´½¨KEYÈÎÎñ
+    //åˆ›å»ºKEYä»»åŠ¡
     xTaskCreate((TaskFunction_t )key_task,     
                 (const char*    )"key_task",   
                 (uint16_t       )KEY_TASK_STKSIZE,
                 (void*          )NULL,
                 (UBaseType_t    )KEY_TASK_PRIO,
                 (TaskHandle_t*  )&KEY_TASK_HANDLER); 
-	//´´½¨LEDÈÎÎñ
+	//åˆ›å»ºLEDä»»åŠ¡
     xTaskCreate((TaskFunction_t )led_task,     
                 (const char*    )"led_task",   
                 (uint16_t       )LED_TASK_STKSIZE,
@@ -123,7 +124,7 @@ void start_task(void* pvParameters)
                 (UBaseType_t    )LED_TASK_PRIO,
                 (TaskHandle_t*  )&LED_TASK_HANDLER); 				
 
-	//´´½¨IWDGÈÎÎñ
+	//åˆ›å»ºIWDGä»»åŠ¡
     xTaskCreate((TaskFunction_t )iwdg_task,     
                 (const char*    )"iwdg_task",   
                 (uint16_t       )IWDG_TASK_STKSIZE,
@@ -131,7 +132,7 @@ void start_task(void* pvParameters)
                 (UBaseType_t    )IWDG_TASK_PRIO,
                 (TaskHandle_t*  )&IWDG_TASK_HANDLER); 	
 				
-	//´´½¨IWDGÈÎÎñ
+	//åˆ›å»ºIWDGä»»åŠ¡
     xTaskCreate((TaskFunction_t )test_task,     
                 (const char*    )"test_task",   
                 (uint16_t       )TEST_TASK_STKSIZE,
@@ -140,8 +141,8 @@ void start_task(void* pvParameters)
                 (TaskHandle_t*  )&TEST_TASK_HANDLER); 	
 				
 	printf("Task Created!\r\n");			
-	vTaskDelete(NULL);  //É¾³ı¿ªÊ¼ÈÎÎñ£¬²ÎÊıÎªNULL±íÊ¾É¾³ıÈÎÎñ×Ô¼º£¬Ò²¿ÉÓÃÈÎÎñ¾ä±ú
-	taskEXIT_CRITICAL();     //ÍË³öÁÙ½çÇø
+	vTaskDelete(NULL);  //åˆ é™¤å¼€å§‹ä»»åŠ¡ï¼Œå‚æ•°ä¸ºNULLè¡¨ç¤ºåˆ é™¤ä»»åŠ¡è‡ªå·±ï¼Œä¹Ÿå¯ç”¨ä»»åŠ¡å¥æŸ„
+	taskEXIT_CRITICAL();     //é€€å‡ºä¸´ç•ŒåŒº
 }
 
 void key_task(void* pvParameters)
